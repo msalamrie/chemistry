@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🧠 Tebak Unsur - Game Kimia</title>
+<style>
+/* === CSS === */
+:root{
+  --bg: #0d1117;
+  --panel: #161b22;
+  --text: #e6edf3;
+  --muted: #9aa6b2;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --radius: 14px;
+  --shadow: 0 6px 20px rgba(0,0,0,.25);
+}
+body{
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header{
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  padding: 16px;
+}
+header h1{margin:0}
+main{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.panel{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 30px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+h2{
+  color: var(--accent);
+  margin-top: 0;
+}
+.question{
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+input[type="text"]{
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #0e1620;
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+}
+button{
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  font-weight: bold;
+  margin: 10px 5px 0;
+  cursor: pointer;
+  transition: transform .1s ease;
+}
+button:hover{ transform: scale(1.05); }
+#result{
+  margin-top: 10px;
+  font-weight: bold;
+}
+footer{
+  text-align: center;
+  padding: 14px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧠 Tebak Unsur</h1>
+  <a href="games.html" style="color:#fff;text-decoration:none;background:var(--accent);padding:8px 12px;border-radius:var(--radius);">← Kembali</a>
+</header>
+
+<main>
+  <div class="panel">
+    <h2 id="modeLabel">Tebak Unsur</h2>
+    <div class="question" id="questionText">Memuat soal...</div>
+    <input type="text" id="answerInput" placeholder="Ketik jawaban kamu..." autocomplete="off">
+    <div>
+      <button id="checkBtn">Periksa</button>
+      <button id="nextBtn">Soal Berikutnya</button>
+    </div>
+    <div id="result"></div>
+    <div style="margin-top:15px;color:var(--muted);font-size:14px;">
+      Skor: <span id="score">0</span> / <span id="total">0</span>
+    </div>
+  </div>
+</main>
+
+<footer>© 2025 Game Kimia Interaktif | Tebak Unsur</footer>
+
+<script>
+/* === JS === */
+const DATA_URL = './elements.json';
+let ELEMENTS = [];
+let current = null;
+let score = 0, total = 0;
+
+const qText = document.getElementById('questionText');
+const result = document.getElementById('result');
+const scoreEl = document.getElementById('score');
+const totalEl = document.getElementById('total');
+const input = document.getElementById('answerInput');
+const nextBtn = document.getElementById('nextBtn');
+const checkBtn = document.getElementById('checkBtn');
+const modeLabel = document.getElementById('modeLabel');
+
+async function loadData(){
+  const res = await fetch(DATA_URL);
+  const json = await res.json();
+  ELEMENTS = json.elements.filter(e => e.name && e.symbol);
+  nextQuestion();
+}
+
+function randomElement(){
+  return ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+}
+
+function nextQuestion(){
+  result.textContent = '';
+  input.value = '';
+  total++;
+  totalEl.textContent = total;
+  current = randomElement();
+  
+  // Pilih tipe soal acak
+  const types = ['number','symbol','category'];
+  const type = types[Math.floor(Math.random()*types.length)];
+  
+  if(type === 'number'){
+    qText.textContent = `Nomor atom ${current.number} adalah unsur apa?`;
+    modeLabel.textContent = 'Tipe Soal: Berdasarkan Nomor Atom';
+  } else if(type === 'symbol'){
+    qText.textContent = `Simbol “${current.symbol}” adalah unsur apa?`;
+    modeLabel.textContent = 'Tipe Soal: Berdasarkan Simbol';
+  } else {
+    qText.textContent = `Unsur ini termasuk kategori ${current.category}. Apa namanya?`;
+    modeLabel.textContent = 'Tipe Soal: Berdasarkan Kategori';
+  }
+}
+
+function checkAnswer(){
+  const ans = input.value.trim().toLowerCase();
+  if(!ans) return;
+  const correct = current.name.toLowerCase();
+  if(ans === correct){
+    score++;
+    scoreEl.textContent = score;
+    result.style.color = '#22c55e';
+    result.textContent = `✅ Benar! Jawabannya: ${current.name} (${current.symbol})`;
+  }else{
+    result.style.color = '#ef4444';
+    result.textContent = `❌ Salah. Jawaban benar: ${current.name} (${current.symbol})`;
+  }
+}
+
+checkBtn.addEventListener('click', checkAnswer);
+nextBtn.addEventListener('click', nextQuestion);
+input.addEventListener('keypress', e => {
+  if(e.key === 'Enter') checkAnswer();
+});
+
+loadData();
+</script>
+</body>
+</html>
