@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tabel Periodik Unsur</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>🧪 Tabel Periodik Unsur</h1>
+    <div class="controls">
+      <input id="searchInput" type="search" placeholder="Cari: H / Hidrogen / 1" aria-label="Cari unsur" />
+      <button id="clearBtn" class="secondary" aria-label="Hapus pencarian">Bersihkan</button>
+      <label class="toggle">
+        <input type="checkbox" id="themeToggle" />
+        <span>Mode Gelap</span>
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <section class="legend" id="legend"></section>
+
+    <section id="grid" class="periodic-grid" aria-live="polite" aria-busy="true">
+      <!-- Kartu unsur akan dirender via JS -->
+    </section>
+  </main>
+
+  <!-- Modal detail -->
+  <dialog id="detailModal">
+    <form method="dialog" class="modal-card">
+      <header class="modal-header">
+        <h2 id="elTitle">Unsur</h2>
+        <button id="closeModal" aria-label="Tutup">✕</button>
+      </header>
+      <div class="modal-body" id="elBody">
+        <!-- Konten diisi via JS -->
+      </div>
+      <footer class="modal-footer">
+        <button value="cancel" class="secondary">Tutup</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <footer class="site-footer">
+    <small>
+      Data unsur diambil dari dataset JSON open-source (118 unsur). Tampilan dibuat responsif & ringan.
+    </small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
