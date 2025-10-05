@@ -78,6 +78,24 @@ main{ padding: 16px; }
   outline: 1px solid rgba(255,255,255,.12);
 }
 
+.btn-game {
+  display: inline-block;
+  text-decoration: none;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+.btn-game:hover {
+  opacity: .9;
+  transform: scale(1.03);
+}
+.menu {
+  margin-top: 10px;
+}
+
 .periodic-grid{
   display: grid;
   grid-template-columns: repeat(18, minmax(40px, 1fr));
