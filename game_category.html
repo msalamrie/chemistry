@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🔬 Tebak Kategori - Game Kimia</title>
+<style>
+/* === CSS === */
+:root{
+  --bg:#0d1117; --panel:#161b22; --text:#e6edf3; --muted:#9aa6b2;
+  --border:#30363d; --accent:#58a6ff; --radius:14px; --shadow:0 6px 20px rgba(0,0,0,.25);
+}
+body{
+  font-family:system-ui,sans-serif; background:var(--bg); color:var(--text);
+  margin:0; display:flex; flex-direction:column; min-height:100vh;
+}
+header{
+  background:var(--panel); border-bottom:1px solid var(--border);
+  text-align:center; padding:16px;
+}
+header h1{margin:0}
+main{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;
+}
+.game-box{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:30px; max-width:600px; width:100%; text-align:center;
+}
+.question{font-size:22px;margin-bottom:20px;}
+.option{
+  display:block; background:#0e1620; border:1px solid var(--border); border-radius:var(--radius);
+  padding:10px; margin:6px 0; cursor:pointer; transition:background .1s;
+}
+.option:hover{background:var(--accent);color:#fff;}
+.option.correct{background:#22c55e;color:#fff;border-color:#22c55e;}
+.option.wrong{background:#ef4444;color:#fff;border-color:#ef4444;}
+.score-box{color:var(--muted);font-size:14px;margin-top:10px;}
+button{
+  background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
+  padding:10px 20px; font-weight:bold; cursor:pointer; margin-top:10px;
+}
+button:hover{transform:scale(1.05);}
+footer{text-align:center;padding:14px;color:var(--muted);border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔬 Tebak Kategori</h1>
+  <a href="games.html" style="color:#fff;text-decoration:none;background:var(--accent);padding:8px 12px;border-radius:var(--radius);">← Kembali</a>
+</header>
+
+<main>
+  <div class="game-box">
+    <div class="question" id="question">Tekan “Mulai” untuk memulai!</div>
+    <div id="options"></div>
+    <button id="startBtn">Mulai</button>
+    <div class="score-box">Skor: <span id="score">0</span> / <span id="total">0</span></div>
+  </div>
+</main>
+
+<footer>© 2025 Game Kimia Interaktif | Tebak Kategori</footer>
+
+<script>
+/* === JS === */
+const DATA_URL = './elements.json';
+let ELEMENTS = [];
+let current = null;
+let score = 0;
+let total = 0;
+
+const qEl = document.getElementById('question');
+const optBox = document.getElementById('options');
+const scoreEl = document.getElementById('score');
+const totalEl = document.getElementById('total');
+const startBtn = document.getElementById('startBtn');
+
+async function loadData(){
+  const res = await fetch(DATA_URL);
+  const json = await res.json();
+  ELEMENTS = json.elements.filter(e => e.category && e.name && e.symbol);
+}
+
+function normalizeCategory(cat){
+  return cat.toLowerCase().replace(/-/g,' ').trim();
+}
+
+function getCategories(){
+  const cats = [...new Set(ELEMENTS.map(e => normalizeCategory(e.category)))];
+  return cats.sort();
+}
+
+function randomElement(){
+  return ELEMENTS[Math.floor(Math.random()*ELEMENTS.length)];
+}
+
+function startGame(){
+  score = 0;
+  total = 0;
+  scoreEl.textContent = 0;
+  totalEl.textContent = 0;
+  startBtn.style.display = 'none';
+  nextQuestion();
+}
+
+function nextQuestion(){
+  optBox.innerHTML = '';
+  current = randomElement();
+  total++;
+  totalEl.textContent = total;
+  qEl.textContent = `Unsur “${current.name}” (${current.symbol}) termasuk kategori apa?`;
+
+  const correct = normalizeCategory(current.category);
+  const allCats = getCategories();
+  const options = new Set([correct]);
+  while(options.size < 4){
+    options.add(allCats[Math.floor(Math.random()*allCats.length)]);
+  }
+  const opts = Array.from(options).sort(()=>Math.random()-0.5);
+
+  opts.forEach(o=>{
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = o;
+    div.addEventListener('click',()=>checkAnswer(div, correct));
+    optBox.appendChild(div);
+  });
+}
+
+function checkAnswer(div, correct){
+  const chosen = div.textContent.trim().toLowerCase();
+  const all = optBox.querySelectorAll('.option');
+  all.forEach(o=>o.style.pointerEvents='none');
+  if(chosen===correct){
+    div.classList.add('correct');
+    score++;
+    scoreEl.textContent = score;
+  } else {
+    div.classList.add('wrong');
+    all.forEach(o=>{
+      if(o.textContent.trim().toLowerCase()===correct) o.classList.add('correct');
+    });
+  }
+  setTimeout(()=>nextQuestion(),900);
+}
+
+startBtn.addEventListener('click', startGame);
+loadData();
+</script>
+</body>
+</html>
