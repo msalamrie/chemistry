@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🧩 Cocokkan Unsur - Game Kimia</title>
+<style>
+/* === CSS === */
+:root{
+  --bg: #0d1117;
+  --panel: #161b22;
+  --text: #e6edf3;
+  --muted: #9aa6b2;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --radius: 14px;
+  --shadow: 0 6px 20px rgba(0,0,0,.25);
+}
+body{
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+header{
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  padding: 16px;
+}
+header h1{margin:0}
+main{
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.board{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 600px;
+  margin-top: 20px;
+}
+.card{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 0;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px;
+  transition: all .2s;
+}
+.card:hover{
+  background: var(--accent);
+  color: #fff;
+}
+.card.correct{
+  background: #22c55e !important;
+  color: #fff !important;
+  border-color: #22c55e;
+  cursor: default;
+}
+.card.wrong{
+  background: #ef4444 !important;
+  color: #fff !important;
+}
+.score-panel{
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+button{
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  font-weight: bold;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: transform .1s ease;
+}
+button:hover{ transform: scale(1.05); }
+footer{
+  text-align: center;
+  padding: 14px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧩 Cocokkan Unsur</h1>
+  <a href="games.html" style="color:#fff;text-decoration:none;background:var(--accent);padding:8px 12px;border-radius:var(--radius);">← Kembali</a>
+</header>
+
+<main>
+  <div class="panel" style="text-align:center;">
+    <p>Cocokkan <b>nama unsur</b> dengan <b>simbolnya</b>! Pilih pasangan yang benar.</p>
+    <button id="startBtn">Mulai Ulang</button>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="score-panel">
+    Benar: <span id="score">0</span> | Salah: <span id="wrong">0</span>
+  </div>
+</main>
+
+<footer>© 2025 Game Kimia Interaktif | Cocokkan Unsur</footer>
+
+<script>
+/* === JS === */
+const DATA_URL = './elements.json';
+let ELEMENTS = [];
+let pairs = [];
+let selected = [];
+let score = 0, wrong = 0;
+
+const board = document.getElementById('board');
+const startBtn = document.getElementById('startBtn');
+const scoreEl = document.getElementById('score');
+const wrongEl = document.getElementById('wrong');
+
+async function loadData(){
+  const res = await fetch(DATA_URL);
+  const json = await res.json();
+  ELEMENTS = json.elements.filter(e => e.name && e.symbol);
+  startGame();
+}
+
+function startGame(){
+  board.innerHTML = '';
+  selected = [];
+  score = 0; wrong = 0;
+  scoreEl.textContent = 0;
+  wrongEl.textContent = 0;
+
+  // ambil 6 unsur acak
+  const chosen = ELEMENTS.sort(()=>Math.random()-0.5).slice(0,6);
+  const nameCards = chosen.map(e => ({type:'name', id:e.number, text:e.name}));
+  const symbolCards = chosen.map(e => ({type:'symbol', id:e.number, text:e.symbol}));
+  pairs = [...nameCards, ...symbolCards].sort(()=>Math.random()-0.5);
+
+  pairs.forEach(p=>{
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.textContent = p.text;
+    div.dataset.id = p.id;
+    div.dataset.type = p.type;
+    div.addEventListener('click', ()=>onSelect(div));
+    board.appendChild(div);
+  });
+}
+
+function onSelect(card){
+  if(card.classList.contains('correct')) return;
+  if(selected.includes(card)) return;
+  selected.push(card);
+  card.style.background = '#1e293b';
+  if(selected.length === 2){
+    setTimeout(()=>checkPair(), 400);
+  }
+}
+
+function checkPair(){
+  const [a,b] = selected;
+  if(!a || !b) return;
+  if(a.dataset.id === b.dataset.id && a.dataset.type !== b.dataset.type){
+    a.classList.add('correct');
+    b.classList.add('correct');
+    score++;
+    scoreEl.textContent = score;
+  }else{
+    a.classList.add('wrong');
+    b.classList.add('wrong');
+    wrong++;
+    wrongEl.textContent = wrong;
+    setTimeout(()=>{
+      a.classList.remove('wrong');
+      b.classList.remove('wrong');
+      a.style.background = ''; b.style.background = '';
+    }, 600);
+  }
+  selected = [];
+  // cek selesai
+  if(document.querySelectorAll('.card.correct').length === pairs.length){
+    setTimeout(()=>{
+      alert(`Selesai! 🎉\nBenar: ${score} | Salah: ${wrong}`);
+      startGame();
+    }, 500);
+  }
+}
+
+startBtn.addEventListener('click', startGame);
+loadData();
+</script>
+</body>
+</html>
