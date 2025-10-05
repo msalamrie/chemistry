@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>⚡ Quiz Cepat - Game Kimia</title>
+<style>
+/* === CSS === */
+:root{
+  --bg:#0d1117; --panel:#161b22; --text:#e6edf3; --muted:#9aa6b2;
+  --border:#30363d; --accent:#58a6ff; --radius:14px; --shadow:0 6px 20px rgba(0,0,0,.25);
+}
+body{
+  font-family:system-ui,sans-serif; background:var(--bg); color:var(--text);
+  margin:0; display:flex; flex-direction:column; min-height:100vh;
+}
+header{
+  background:var(--panel); border-bottom:1px solid var(--border);
+  text-align:center; padding:16px;
+}
+header h1{margin:0}
+main{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;
+}
+.quiz-box{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:30px; max-width:500px; width:100%; text-align:center;
+}
+.question{font-size:20px;margin-bottom:20px;}
+.option{
+  display:block; background:#0e1620; border:1px solid var(--border); border-radius:var(--radius);
+  padding:10px; margin:6px 0; cursor:pointer; transition:background .1s;
+}
+.option:hover{background:var(--accent); color:#fff;}
+.option.correct{background:#22c55e;color:#fff;border-color:#22c55e;}
+.option.wrong{background:#ef4444;color:#fff;border-color:#ef4444;}
+.score-timer{display:flex;justify-content:space-between;color:var(--muted);margin-bottom:10px;font-size:14px;}
+button{
+  background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
+  padding:10px 20px; font-weight:bold; cursor:pointer; margin-top:10px;
+}
+button:hover{transform:scale(1.05);}
+footer{text-align:center;padding:14px;color:var(--muted);border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ Quiz Cepat</h1>
+  <a href="games.html" style="color:#fff;text-decoration:none;background:var(--accent);padding:8px 12px;border-radius:var(--radius);">← Kembali</a>
+</header>
+
+<main>
+  <div class="quiz-box">
+    <div class="score-timer">
+      <span>Skor: <b id="score">0</b></span>
+      <span>⏱️ Waktu: <b id="time">60</b>s</span>
+    </div>
+    <div class="question" id="question">Tekan “Mulai” untuk memulai!</div>
+    <div id="options"></div>
+    <button id="startBtn">Mulai</button>
+  </div>
+</main>
+
+<footer>© 2025 Game Kimia Interaktif | Quiz Cepat</footer>
+
+<script>
+/* === JS === */
+const DATA_URL = './elements.json';
+let ELEMENTS = [];
+let current = null;
+let score = 0;
+let time = 60;
+let timer = null;
+let started = false;
+
+const qEl = document.getElementById('question');
+const optBox = document.getElementById('options');
+const scoreEl = document.getElementById('score');
+const timeEl = document.getElementById('time');
+const startBtn = document.getElementById('startBtn');
+
+async function loadData(){
+  const res = await fetch(DATA_URL);
+  const json = await res.json();
+  ELEMENTS = json.elements.filter(e=>e.name && e.symbol);
+}
+function randomElement(){ return ELEMENTS[Math.floor(Math.random()*ELEMENTS.length)]; }
+
+function startGame(){
+  if(started) return;
+  started = true;
+  score = 0; time = 60;
+  scoreEl.textContent = score;
+  timeEl.textContent = time;
+  startBtn.style.display='none';
+  nextQuestion();
+  timer = setInterval(()=>{
+    time--;
+    timeEl.textContent = time;
+    if(time<=0){ endGame(); }
+  },1000);
+}
+
+function endGame(){
+  clearInterval(timer);
+  qEl.textContent = `⏰ Waktu habis! Skor akhir kamu: ${score}`;
+  optBox.innerHTML = '';
+  startBtn.textContent = 'Main Lagi';
+  startBtn.style.display='block';
+  started = false;
+}
+
+function nextQuestion(){
+  optBox.innerHTML = '';
+  current = randomElement();
+  const types = ['symbol','number'];
+  const type = types[Math.floor(Math.random()*types.length)];
+
+  let questionText='';
+  let correctAns='';
+  if(type==='symbol'){
+    questionText = `Simbol unsur apa yang memiliki nama “${current.name}”?`;
+    correctAns = current.symbol;
+  } else {
+    questionText = `Nomor atom berapa milik unsur “${current.name}”?`;
+    correctAns = String(current.number);
+  }
+  qEl.textContent = questionText;
+
+  // Buat opsi jawaban acak
+  const options = new Set([correctAns]);
+  while(options.size<4){
+    const r = randomElement();
+    options.add(type==='symbol'?r.symbol:String(r.number));
+  }
+  const opts = Array.from(options).sort(()=>Math.random()-0.5);
+  opts.forEach(o=>{
+    const div=document.createElement('div');
+    div.className='option';
+    div.textContent=o;
+    div.addEventListener('click',()=>checkAnswer(div, correctAns));
+    optBox.appendChild(div);
+  });
+}
+
+function checkAnswer(div, correctAns){
+  const chosen = div.textContent.trim();
+  const all = optBox.querySelectorAll('.option');
+  all.forEach(o=>o.style.pointerEvents='none');
+  if(chosen===correctAns){
+    div.classList.add('correct');
+    score++;
+    scoreEl.textContent=score;
+  }else{
+    div.classList.add('wrong');
+    all.forEach(o=>{
+      if(o.textContent.trim()===correctAns) o.classList.add('correct');
+    });
+  }
+  setTimeout(()=>nextQuestion(),800);
+}
+
+startBtn.addEventListener('click', startGame);
+loadData();
+</script>
+</body>
+</html>
