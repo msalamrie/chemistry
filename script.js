@@ -1,7 +1,7 @@
 // Sumber data JSON open-source (118 unsur) dengan posisi grid (xpos, ypos).
 // Jika mau mandiri (tanpa internet), kamu bisa duplikasi file JSON ini ke repo-mu
 // dan ganti URL di bawah ke './elements.json'.
-const DATA_URL = 'https://raw.githubusercontent.com/Bowserinator/Periodic-Table-JSON/master/PeriodicTableJSON.json';
+const DATA_URL = './elements.json';
 
 const grid = document.getElementById('grid');
 const searchInput = document.getElementById('searchInput');
