@@ -79,7 +79,7 @@ button:hover{transform:scale(1.05);}
 <footer>© 2025 Game Kimia Interaktif | Susun Tabel Periodik</footer>
 
 <script>
-/* === GAME LOGIC === */
+/* === GAME LOGIC FIXED === */
 const DATA_URL = './elements.json';
 let ELEMENTS = [];
 let currentSet = [];
@@ -102,6 +102,9 @@ function buildGrid(){
       cell.className='cell';
       cell.dataset.row=r;
       cell.dataset.col=c;
+      // listener drop langsung
+      cell.ondragover = e => e.preventDefault();
+      cell.ondrop = e => handleDrop(e, cell);
       grid.appendChild(cell);
     }
   }
@@ -144,38 +147,27 @@ function renderSymbols(){
     div.className='symbol';
     div.textContent=e.symbol;
     div.draggable=true;
-    div.dataset.number=e.number;
     div.dataset.period=e.period;
     div.dataset.group=e.group;
-    div.addEventListener('dragstart', dragStart);
+    div.ondragstart = ev => {
+      ev.dataTransfer.setData('symbol', e.symbol);
+      ev.dataTransfer.setData('period', e.period);
+      ev.dataTransfer.setData('group', e.group);
+    };
     symbolsBox.appendChild(div);
   });
 }
 
-/* === Drag & Drop handler === */
-function dragStart(e){
-  e.dataTransfer.setData('symbol', e.target.textContent);
-  e.dataTransfer.setData('num', e.target.dataset.number);
-  e.dataTransfer.setData('period', e.target.dataset.period);
-  e.dataTransfer.setData('group', e.target.dataset.group);
-}
-grid.addEventListener('dragover', e=>e.preventDefault());
-grid.addEventListener('drop', e=>{
+/* === Drop handler === */
+function handleDrop(e, cell){
   e.preventDefault();
   const symbol = e.dataTransfer.getData('symbol');
   const period = parseInt(e.dataTransfer.getData('period'));
   const group = parseInt(e.dataTransfer.getData('group'));
-  const cell = e.target.closest('.cell');
-  if(!cell) return;
-
   const row = parseInt(cell.dataset.row);
   const col = parseInt(cell.dataset.col);
 
-  // Posisi benar: baris = period, kolom = group
-  const correctRow = period;
-  const correctCol = group;
-
-  if(row===correctRow && col===correctCol){
+  if(row===period && col===group){
     cell.textContent = symbol;
     cell.classList.add('correct');
     cell.style.pointerEvents='none';
@@ -186,25 +178,23 @@ grid.addEventListener('drop', e=>{
     if(sEl) sEl.remove();
   } else {
     cell.classList.add('wrong');
-    setTimeout(()=>cell.classList.remove('wrong'),500);
+    setTimeout(()=>cell.classList.remove('wrong'),400);
   }
 
   if(correctCount===totalCount){
-    setTimeout(()=>{
-      alert(`🎉 Selesai! Kamu berhasil menyusun semua ${totalCount} unsur!`);
-    },300);
+    setTimeout(()=>alert(`🎉 Kamu berhasil menyusun semua ${totalCount} unsur!`),200);
   }
-});
+}
 
 /* === Tombol ulang === */
-restartBtn.addEventListener('click', ()=>{
+restartBtn.onclick = ()=>{
   modeBtns.style.display='flex';
   restartBtn.style.display='none';
   grid.innerHTML='';
   symbolsBox.innerHTML='';
   scoreEl.textContent='0';
   totalEl.textContent='0';
-});
+};
 </script>
 </body>
 </html>
