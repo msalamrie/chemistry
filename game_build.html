@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🧩 Susun Tabel Periodik - Game Kimia</title>
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --text:#e6edf3; --muted:#9aa6b2;
+  --border:#30363d; --accent:#58a6ff; --radius:10px; --shadow:0 4px 18px rgba(0,0,0,.25);
+  --correct:#22c55e; --wrong:#ef4444;
+}
+body{
+  font-family:system-ui,sans-serif; background:var(--bg); color:var(--text);
+  margin:0; display:flex; flex-direction:column; min-height:100vh;
+}
+header{
+  background:var(--panel); border-bottom:1px solid var(--border);
+  text-align:center; padding:14px;
+}
+header h1{margin:0;}
+main{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;
+}
+footer{text-align:center;padding:14px;color:var(--muted);border-top:1px solid var(--border);}
+.game-area{
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+}
+.grid{
+  display:grid; grid-template-columns:repeat(18,40px); grid-template-rows:repeat(9,40px);
+  gap:4px; justify-content:center; background:var(--panel);
+  padding:10px; border-radius:var(--radius); border:1px solid var(--border);
+}
+.cell{
+  width:40px; height:40px; border:1px solid var(--border); border-radius:6px;
+  display:flex; align-items:center; justify-content:center; font-size:12px;
+  background:#0f1620; color:var(--muted);
+}
+.cell.correct{background:var(--correct)!important;color:#fff;}
+.cell.wrong{background:var(--wrong)!important;color:#fff;}
+.symbols{
+  display:flex; flex-wrap:wrap; gap:6px; justify-content:center;
+  max-width:640px;
+}
+.symbol{
+  background:var(--accent); color:#fff; font-weight:bold;
+  border:none; border-radius:var(--radius); padding:8px 10px;
+  cursor:grab; user-select:none;
+}
+.symbol:active{opacity:0.7;}
+.scorebox{font-size:14px;color:var(--muted);}
+button{
+  background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
+  padding:8px 16px; font-weight:bold; cursor:pointer;
+}
+button:hover{transform:scale(1.05);}
+.mode-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧩 Susun Tabel Periodik</h1>
+  <a href="games.html" style="color:#fff;text-decoration:none;background:var(--accent);padding:6px 10px;border-radius:var(--radius);">← Kembali</a>
+</header>
+
+<main>
+  <div class="game-area">
+    <div class="mode-buttons" id="modeButtons">
+      <button onclick="startGame('easy')">Mode Mudah (10 Unsur)</button>
+      <button onclick="startGame('full')">Mode Lengkap (118 Unsur)</button>
+    </div>
+    <div class="scorebox">Benar: <span id="score">0</span> | Total: <span id="total">0</span></div>
+    <div class="grid" id="grid"></div>
+    <div class="symbols" id="symbols"></div>
+    <button id="restart" style="display:none;">Mulai Ulang</button>
+  </div>
+</main>
+
+<footer>© 2025 Game Kimia Interaktif | Susun Tabel Periodik</footer>
+
+<script>
+/* === GAME LOGIC === */
+const DATA_URL = './elements.json';
+let ELEMENTS = [];
+let currentSet = [];
+let correctCount = 0, totalCount = 0;
+let mode = 'easy';
+
+const grid = document.getElementById('grid');
+const symbolsBox = document.getElementById('symbols');
+const scoreEl = document.getElementById('score');
+const totalEl = document.getElementById('total');
+const restartBtn = document.getElementById('restart');
+const modeBtns = document.getElementById('modeButtons');
+
+/* === Bangun grid kosong (18x9) === */
+function buildGrid(){
+  grid.innerHTML='';
+  for(let r=1;r<=9;r++){
+    for(let c=1;c<=18;c++){
+      const cell = document.createElement('div');
+      cell.className='cell';
+      cell.dataset.row=r;
+      cell.dataset.col=c;
+      grid.appendChild(cell);
+    }
+  }
+}
+
+/* === Muat data unsur === */
+async function loadData(){
+  const res = await fetch(DATA_URL);
+  const json = await res.json();
+  ELEMENTS = json.elements.filter(e=>e.symbol && e.period && e.group);
+}
+loadData();
+
+/* === Ambil subset === */
+function getSubset(){
+  if(mode==='easy') return ELEMENTS.slice(0,10); // 10 unsur pertama
+  return ELEMENTS; // semua 118
+}
+
+/* === Mulai game === */
+function startGame(m){
+  mode = m;
+  currentSet = getSubset();
+  correctCount = 0;
+  totalCount = currentSet.length;
+  scoreEl.textContent = 0;
+  totalEl.textContent = totalCount;
+  modeBtns.style.display='none';
+  restartBtn.style.display='inline-block';
+  buildGrid();
+  renderSymbols();
+}
+
+/* === Render simbol (drag source) === */
+function renderSymbols(){
+  symbolsBox.innerHTML='';
+  currentSet.sort(()=>Math.random()-0.5);
+  currentSet.forEach(e=>{
+    const div = document.createElement('div');
+    div.className='symbol';
+    div.textContent=e.symbol;
+    div.draggable=true;
+    div.dataset.number=e.number;
+    div.dataset.period=e.period;
+    div.dataset.group=e.group;
+    div.addEventListener('dragstart', dragStart);
+    symbolsBox.appendChild(div);
+  });
+}
+
+/* === Drag & Drop handler === */
+function dragStart(e){
+  e.dataTransfer.setData('symbol', e.target.textContent);
+  e.dataTransfer.setData('num', e.target.dataset.number);
+  e.dataTransfer.setData('period', e.target.dataset.period);
+  e.dataTransfer.setData('group', e.target.dataset.group);
+}
+grid.addEventListener('dragover', e=>e.preventDefault());
+grid.addEventListener('drop', e=>{
+  e.preventDefault();
+  const symbol = e.dataTransfer.getData('symbol');
+  const period = parseInt(e.dataTransfer.getData('period'));
+  const group = parseInt(e.dataTransfer.getData('group'));
+  const cell = e.target.closest('.cell');
+  if(!cell) return;
+
+  const row = parseInt(cell.dataset.row);
+  const col = parseInt(cell.dataset.col);
+
+  // Posisi benar: baris = period, kolom = group
+  const correctRow = period;
+  const correctCol = group;
+
+  if(row===correctRow && col===correctCol){
+    cell.textContent = symbol;
+    cell.classList.add('correct');
+    cell.style.pointerEvents='none';
+    correctCount++;
+    scoreEl.textContent = correctCount;
+    // hapus simbol
+    const sEl = [...symbolsBox.children].find(x=>x.textContent===symbol);
+    if(sEl) sEl.remove();
+  } else {
+    cell.classList.add('wrong');
+    setTimeout(()=>cell.classList.remove('wrong'),500);
+  }
+
+  if(correctCount===totalCount){
+    setTimeout(()=>{
+      alert(`🎉 Selesai! Kamu berhasil menyusun semua ${totalCount} unsur!`);
+    },300);
+  }
+});
+
+/* === Tombol ulang === */
+restartBtn.addEventListener('click', ()=>{
+  modeBtns.style.display='flex';
+  restartBtn.style.display='none';
+  grid.innerHTML='';
+  symbolsBox.innerHTML='';
+  scoreEl.textContent='0';
+  totalEl.textContent='0';
+});
+</script>
+</body>
+</html>
